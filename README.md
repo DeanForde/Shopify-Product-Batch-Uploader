@@ -2,9 +2,7 @@
 Allows user to batch upload products to a new or existing collection on shopify from CSV file
 
 * Functionality to be added.
-* Store conntection to be encapsulated. 
-  API_KEY = os.environ.get("KEY"),
-  PASSWORD = os.environ.get("PASS")
+* Havent tested repo with code change
 
-Will package correctly once project is complete and refactored (ie requirements.txt etc..)
+Will package correctly once project is complete (ie requirements.txt etc..)
 
