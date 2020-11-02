@@ -6,5 +6,5 @@ Allows user to batch upload products to a new or existing collection on shopify 
   API_KEY = os.environ.get("KEY"),
   PASSWORD = os.environ.get("PASS")
 
-Will package correctly once project is complete (ie requirements.txt etc..)
+Will package correctly once project is complete and refactored (ie requirements.txt etc..)
 
