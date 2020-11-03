@@ -1,14 +1,16 @@
-import shopify  #pip install shopifyapi
-import sys
 import os
+import sys
+import shopify
 import pandas as pd
 from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
+from urllib.error import HTTPError
 
-API_KEY = os.environ.get("KEY")
-PASSWORD = os.environ.get("PASS")
-SHOP_NAME = os.environ.get("SHOP_NAME")
+
+API_KEY = os.environ.get('KEY')
+PASSWORD = os.environ.get('PASS')
+SHOP_NAME = ''
 
 class GUI:
 
@@ -53,11 +55,14 @@ class GUI:
         self.uploadBtn.grid(column=2, row=1, sticky="N", pady=180)
 
     def GetAllCollections(self):
-        i = 0
-        collection_listings = shopify.CollectionListing.find()
-        for x in collection_listings:
-            self.lb.insert(i, x.handle)
-            i += 1
+        try:
+            i = 0
+            collection_listings = shopify.CollectionListing.find()
+            for x in collection_listings:
+                self.lb.insert(i, x.handle)
+                i += 1
+        except:
+            raise RuntimeError("Could Not Fetch Collection List.")
 
     def LbCallBack(self, event):
         if(self.lb.curselection()):
@@ -74,17 +79,19 @@ class GUI:
             messagebox.showerror(
                 "Error", "Make sure collection name and CSV not empty")
         else:
+            self.infobox.delete('1.0', END)
             self.Infobox_Update('Processing, Please Wait..', 'normal')
             collection_id = self.GetCollectionId()
             list_of_products = self.AddProducts()
             self.AddToCollection(list_of_products, collection_id)
+            self.ClearFields()
 
     def CeateNewCollection(self):
         try:
             new_collect = shopify.CustomCollection()
             new_collect.title = self.collection.get()
             new_collect.save()
-            self.Infobox_Update('New Collection Created', 'complete')
+            self.Infobox_Update('New Collection Created', 'normal')
         except:
             raise RuntimeError("Could Not Create A New Collection")
 
@@ -104,11 +111,11 @@ class GUI:
 
     def ReadFile(self):
         try:
-            self.Infobox_Update('Attempting To Read CSV File', 'normal')
+            self.Infobox_Update('Reading CSV File', 'normal')
             data = pd.read_csv(self.csv.get())
             return data
-        except IOError:
-            print(IOError)
+        except IOError as e:
+            print(e)
 
     def AddProducts(self):
         list_of_products = []
@@ -123,11 +130,11 @@ class GUI:
                 new_product.vendor = data['vendor'][ind]
                 new_product.save()
                 self.Infobox_Update(
-                    'New Product: ' + new_product.title + ' Added Successfully', 'complete')
+                    'Product: ' + new_product.title + ' Added To Store Sucessfully', 'normal')
                 list_of_products.append(new_product)
             return list_of_products
         except:
-            raise RuntimeError("Could Not Add Product To Store")
+            raise RuntimeError("Could Not Add Product To Store.")
 
     def AddToCollection(self, list_of_products, collection_id):
         try:
@@ -135,10 +142,10 @@ class GUI:
                 add_collection = shopify.Collect(
                     {'product_id': product.id, 'collection_id': collection_id})
                 add_collection.save()
-                self.Infobox_Update(
-                    'All Products Added To Collection Successfully', 'complete')
+            self.Infobox_Update(
+                'All Products Added To Store Sucessfully', 'complete')
         except:
-            raise RuntimeError("Could Not Add Product To Collection")
+            raise RuntimeError("Could Not Add Products To Collection.")
 
     def ClearFields(self):
         self.collection.delete(0, END)
@@ -152,9 +159,12 @@ class GUI:
 
 
 def ConnectToStore():
-    shop_url = "https://%s:%s@:%s.myshopify.com/admin" % (
-        API_KEY, PASSWORD, SHOP_NAME)
-    shopify.ShopifyResource.set_site(shop_url)
+    try:
+        shop_url = "https://%s:%s@%s.myshopify.com/admin" % (
+            API_KEY, PASSWORD, SHOP_NAME)
+        shopify.ShopifyResource.set_site(shop_url)
+    except HTTPError as e:
+        print('Cannot Connect To Store Because - Status Code: ' + e.code)
 
 
 def main():
